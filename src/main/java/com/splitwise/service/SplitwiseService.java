@@ -6,10 +6,12 @@ import com.splitwise.entity.Transaction;
 import com.splitwise.entity.TransactionGroup;
 import com.splitwise.entity.UserData;
 import com.splitwise.model.TransactionModel;
+import com.splitwise.model.UserInfo;
 import com.splitwise.model.Users;
 import com.splitwise.repository.TransactionGroupRespository;
 import com.splitwise.repository.TransactionsRepository;
 import com.splitwise.repository.UserRepository;
+import org.apache.catalina.User;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -27,15 +29,17 @@ public class SplitwiseService {
     @Autowired
     TransactionGroupRespository transactionGroupRespository;
 
-    public List<Users> getUserData(Integer userId){
+    public UserInfo getUserData(Integer userId){
         List<UserData> userData = userRepository.findByUserFromOrUserTo(userId, userId);
         return createUsers(userData,userId);
     }
 
 
-    public List<Users> createUsers(List<UserData> userData, Integer userId){
+    public UserInfo createUsers(List<UserData> userData, Integer userId){
+        UserInfo userInfo = new UserInfo();
         List<Users> allInfo = new ArrayList<>();
-        userData.forEach(eachUserData->{
+        double netBalance = 0;
+        for(UserData eachUserData: userData){
             Users user = new Users();
             if(eachUserData.getUserTo() == userId){
                 user.setUserName(eachUserData.getUserFrom());
@@ -45,9 +49,12 @@ public class SplitwiseService {
                 user.setUserName(eachUserData.getUserTo());
                 user.setAmount(eachUserData.getTransactionTotalAmount());
             }
+            netBalance += user.getAmount();
             allInfo.add(user);
-        });
-        return allInfo;
+        }
+        userInfo.setNetBalance(netBalance);
+        userInfo.setUsers(allInfo);
+        return userInfo;
     }
 
     @Transactional
@@ -60,13 +67,17 @@ public class SplitwiseService {
             UserData previousUserData = userRepository.findByTwoDifferentUsers(transaction.getUserFrom(),eachUser.getUserName());
 
             updatedAmount  = getNewAmount(previousUserData, transaction.getUserFrom(), eachUser.getAmount());
-            userData.add(new UserData(transaction.getUserFrom(),eachUser.getUserName(), updatedAmount));
+
+            if(previousUserData==null) {
+                userRepository.save(new UserData(transaction.getUserFrom(), eachUser.getUserName(), updatedAmount));
+            }
+            else{
+                userRepository.updateData(previousUserData.getUserFrom(),previousUserData.getUserTo(), updatedAmount);
+            }
 
             Transaction eachTransaction = new Transaction(transaction.getUserFrom(),eachUser.getUserName(),uniqueId,eachUser.getAmount());
             transactions.add(eachTransaction);
         });
-
-        userRepository.saveAll(userData);
         transactionsRepository.saveAll(transactions);
     }
 
@@ -74,21 +85,14 @@ public class SplitwiseService {
         double total;
         if(userData!=null) {
             if (userData.getUserFrom() != userFrom) {
-                Integer temp;
-                temp = userData.getUserFrom();
-                userData.setUserFrom(userData.getUserTo());
-                userData.setUserTo(temp);
-//                return userData.getTransactionTotalAmount() + (transactionAmount * -1);
-            }
-//            else {
 
-            total= userData.getTransactionTotalAmount() + transactionAmount;
-//            }
+                return userData.getTransactionTotalAmount() + (transactionAmount * -1);
+            }
+            return userData.getTransactionTotalAmount() + transactionAmount;
         }
         else {
-            total= transactionAmount;
+            return transactionAmount;
         }
-        return total;
     }
 
 
@@ -101,7 +105,5 @@ public class SplitwiseService {
         TransactionGroup transactionGroup = transactionGroupRespository.findById(transactionId).orElse(null);
         return transactionGroup.getTransactionInfo();
     }
-
-
 
 }

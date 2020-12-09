@@ -35,9 +35,7 @@ dependencies {
     compile group: 'org.json', name: 'json', version: '20200518'
 
 
-    testImplementation('org.springframework.boot:spring-boot-starter-test') {
-        exclude group: 'org.junit.vintage', module: 'junit-vintage-engine'
-    }
+    testImplementation('org.springframework.boot:spring-boot-starter-test')
     //testImplementation 'org.springframework.security:spring-security-test'
 }
 

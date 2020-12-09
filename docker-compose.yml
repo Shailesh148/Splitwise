@@ -4,12 +4,14 @@ services:
     restart: always
     container_name: splitwise-docker-mysql
     image: mysql
+    cap_add:
+      - SYS_NICE
     environment:
       MYSQL_DATABASE: splitwise
       MYSQL_ROOT_PASSWORD: root
       MYSQL_ROOT_HOST: '%'
       MYSQL_USER: splitwiseuser
-      MYSQL_PASSWORD: splitwisesuser
+      MYSQL_PASSWORD: splitwiseuser
     volumes:
       - ./sql:/docker-entrypoint-initdb.d
       - ./db_data:/var/lib/mysql:rw

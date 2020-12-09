@@ -4,8 +4,10 @@ package com.splitwise.controller;
 import com.splitwise.entity.Transaction;
 import com.splitwise.entity.UserData;
 import com.splitwise.model.TransactionModel;
+import com.splitwise.model.UserInfo;
 import com.splitwise.model.Users;
 import com.splitwise.service.SplitwiseService;
+import io.swagger.annotations.ApiOperation;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -23,8 +25,11 @@ public class SplitwiseController {
 
     @GetMapping(value="/getUser")
     public ResponseEntity getUserDetails(@RequestParam Integer user_id){
-        List<Users> allInfo = splitwiseService.getUserData(user_id);
-        return new ResponseEntity<>(allInfo, HttpStatus.ACCEPTED);
+        if(user_id==null){
+            throw new IllegalArgumentException("userId cannot be null");
+        }
+        UserInfo userAllInfo = splitwiseService.getUserData(user_id);
+        return new ResponseEntity<>(userAllInfo, HttpStatus.ACCEPTED);
     }
 
     @PostMapping(value="/transact")

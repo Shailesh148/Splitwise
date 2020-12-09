@@ -5,11 +5,17 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 @Data
-@NoArgsConstructor
-@AllArgsConstructor
 public class Users {
     Integer userName;
     Double amount;
+
+    public Users(){
+
+    }
+    public Users(Integer userName, Double amount) {
+        this.userName = userName;
+        this.amount = amount;
+    }
 
     public Integer getUserName() {
         return userName;
